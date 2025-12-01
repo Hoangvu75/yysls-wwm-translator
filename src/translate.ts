@@ -31,10 +31,16 @@ function replaceFilenamePattern(filename: string, outPrefix: string): string {
   return filename;
 }
 
+// Sleep function for rate limiting
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function translateText(
   spinner: any,
   inputFile: string,
-  outputFile: string
+  outputFile: string,
+  retryCount: number = 0
 ): Promise<number> {
   const startTime = performance.now();
 
@@ -97,6 +103,20 @@ async function translateText(
     const endTime = performance.now();
     return (endTime - startTime) / 1000; // Convert to seconds
   } catch (error: any) {
+    // Handle rate limit errors with exponential backoff
+    if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('Too Many Requests')) {
+      if (retryCount < 5) {
+        const waitTime = Math.pow(2, retryCount) * 60 * 1000; // 1min, 2min, 4min, 8min, 16min
+        spinner.warn(`Rate limit hit. Waiting ${waitTime / 60000} minutes before retry ${retryCount + 1}/5...`);
+        await sleep(waitTime);
+        spinner.start('Retrying translation...');
+        return translateText(spinner, inputFile, outputFile, retryCount + 1);
+      } else {
+        spinner.fail(`Translation failed after 5 retries due to rate limits.`);
+        return -1;
+      }
+    }
+    
     spinner.fail(`Translation error: ${error.message}`);
     return -1;
   }
@@ -157,6 +177,16 @@ async function main() {
       if (processedTime >= 0) {
         const msg = `[${idx + 1}/${files.length}] Translation completed in ${processedTime.toFixed(2)} seconds.`;
         spinner.info(msg);
+        
+        // Add 4-second delay between requests to avoid rate limit (15 requests/min = 1 request per 4 seconds)
+        if (idx < files.length - 1) {
+          spinner.info('Waiting 4 seconds before next translation to avoid rate limit...');
+          await sleep(4000);
+        }
+      } else {
+        // If translation failed, wait longer before continuing
+        spinner.warn('Translation failed. Waiting 10 seconds before continuing...');
+        await sleep(10000);
       }
     }
 
