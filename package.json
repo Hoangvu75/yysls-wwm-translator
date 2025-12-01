@@ -1,0 +1,32 @@
+{
+  "name": "wwm-locale-nodejs",
+  "version": "1.0.0",
+  "description": "Where Winds Meet Locale tool - Node.js/TypeScript version with Gemini AI",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "translate": "tsx src/translate.ts",
+    "merge": "tsx src/merge.ts",
+    "dev": "tsx watch"
+  },
+  "keywords": [
+    "locale",
+    "translation",
+    "gemini",
+    "wwm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.4.5",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
+

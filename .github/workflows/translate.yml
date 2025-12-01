@@ -1,0 +1,102 @@
+# The action to translate missing entries using Gemini AI
+
+name: Translate missing entries
+
+on:
+  workflow_dispatch:
+    inputs:
+      words_map:
+        description: 'URL download original words_map'
+        required: true
+        default: ""
+        type: string
+      words_map_patched:
+        description: 'URL download patched zip file (optional)'
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  translate:
+    name: Translate with Gemini AI
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Prepare workspace
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Download files
+        run: |
+          mkdir -p ./works
+          curl -L '${{ github.event.inputs.words_map }}' -o ./works/words_map
+
+      - name: Unpack words_map
+        run: |
+          chmod +x ./bin/yanyun
+          ./bin/yanyun ./works/words_map > ./works/unpack_log.log 2>&1
+
+      - name: Download and merge patches (if provided)
+        if: ${{ github.event.inputs.words_map_patched != '' }}
+        run: |
+          curl -L '${{ github.event.inputs.words_map_patched }}' -o ./works/patched.zip
+          mkdir -p ./works/patch
+          mkdir -p ./works/tmp ; unzip ./works/patched.zip -d ./works/tmp
+          FIRST_CHILD=$(ls ./works/tmp | head -n 1)
+          if [ -d "./works/tmp/$FIRST_CHILD" ]; then
+            mv ./works/tmp/$FIRST_CHILD/* ./works/patch/
+          else
+            mv ./works/tmp/* ./works/patch/
+          fi
+          rm -rf ./works/tmp
+          npm run merge ./output/words_map ./works/patch --miss
+
+      - name: Create missing files (if no patches)
+        if: ${{ github.event.inputs.words_map_patched == '' }}
+        run: |
+          mkdir -p ./works/patch
+          npm run merge ./output/words_map ./works/patch --miss
+
+      - name: Translate missing entries
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          mkdir -p ./works/translated
+          if [ -d "./output/words_map/missing" ]; then
+            npm run translate ./output/words_map/missing ./works/translated
+          else
+            echo "No missing entries to translate."
+          fi
+
+      - name: Archive translated files
+        run: |
+          if [ -d "./works/translated" ] && [ "$(ls -A ./works/translated)" ]; then
+            cd ./works ; zip -r translated.zip ./translated
+            echo "TRANSLATION_SUCCESS=true" >> $GITHUB_ENV
+          else
+            echo "TRANSLATION_SUCCESS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Save to GitHub Releases
+        if: ${{ env.TRANSLATION_SUCCESS == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: ./works/translated.zip
+          name: translated-${{ github.run_number }}
+          tag_name: translated-${{ github.run_number }}
+
+      - name: Report no translations
+        if: ${{ env.TRANSLATION_SUCCESS == 'false' }}
+        run: |
+          echo "No entries were translated. All entries may already be translated."
+
