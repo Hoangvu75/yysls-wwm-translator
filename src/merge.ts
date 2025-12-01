@@ -115,7 +115,6 @@ async function mergeTextFiles(
     console.log(`Saved ${missingKeys.length} missing entries to ${missingCount} files.`);
   }
 }
-}
 
 async function main() {
   const args = process.argv.slice(2);
