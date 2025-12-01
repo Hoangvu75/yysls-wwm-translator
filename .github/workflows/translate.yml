@@ -64,6 +64,8 @@ jobs:
         if: ${{ github.event.inputs.words_map_patched == '' }}
         run: |
           mkdir -p ./works/patch
+          # Create empty patch to force all entries as missing
+          echo "{}" > ./works/patch/empty.json
           npm run merge ./output/words_map ./works/patch --miss
 
       - name: Translate missing entries
