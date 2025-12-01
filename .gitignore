@@ -56,3 +56,6 @@ entries.json
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Secrets
+.env
