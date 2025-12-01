@@ -58,7 +58,7 @@ jobs:
             mv ./works/tmp/* ./works/patch/
           fi
           rm -rf ./works/tmp
-          npm run merge ./output/words_map ./works/patch --miss
+          npx tsx src/merge.ts ./output/words_map ./works/patch --miss
 
       - name: Create missing files (if no patches)
         if: ${{ github.event.inputs.words_map_patched == '' }}
@@ -68,7 +68,7 @@ jobs:
           echo "{}" > ./works/patch/empty.json
           cat ./works/patch/empty.json
           echo "Running merge with --miss flag..."
-          npm run merge ./output/words_map ./works/patch --miss
+          npx tsx src/merge.ts ./output/words_map ./works/patch --miss
           echo "Merge completed. Checking output..."
           ls -la ./output/words_map/
 
@@ -85,7 +85,7 @@ jobs:
             FILE_COUNT=$(ls ./output/words_map/missing/*.json 2>/dev/null | wc -l | tr -d ' ')
             echo "Found $FILE_COUNT missing files"
             if [ "$FILE_COUNT" -gt "0" ]; then
-              npm run translate ./output/words_map/missing ./works/translated
+              npx tsx src/translate.ts ./output/words_map/missing ./works/translated
             else
               echo "No missing JSON files to translate."
             fi

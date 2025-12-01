@@ -60,7 +60,7 @@ jobs:
             mv ./works/tmp/* ./works/patch/
           fi
           rm -rf ./works/tmp
-          npm run merge ./output/words_map ./works/patch 
+          npx tsx src/merge.ts ./output/words_map ./works/patch 
 
       - name: Create packed
         run: |
