@@ -66,17 +66,31 @@ jobs:
           mkdir -p ./works/patch
           # Create empty patch to force all entries as missing
           echo "{}" > ./works/patch/empty.json
+          cat ./works/patch/empty.json
+          echo "Running merge with --miss flag..."
           npm run merge ./output/words_map ./works/patch --miss
+          echo "Merge completed. Checking output..."
+          ls -la ./output/words_map/
 
       - name: Translate missing entries
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           mkdir -p ./works/translated
+          echo "Checking for missing files..."
+          ls -la ./output/words_map/ || true
           if [ -d "./output/words_map/missing" ]; then
-            npm run translate ./output/words_map/missing ./works/translated
+            echo "Missing directory found!"
+            ls -la ./output/words_map/missing/ || true
+            FILE_COUNT=$(ls ./output/words_map/missing/*.json 2>/dev/null | wc -l | tr -d ' ')
+            echo "Found $FILE_COUNT missing files"
+            if [ "$FILE_COUNT" -gt "0" ]; then
+              npm run translate ./output/words_map/missing ./works/translated
+            else
+              echo "No missing JSON files to translate."
+            fi
           else
-            echo "No missing entries to translate."
+            echo "No missing directory found."
           fi
 
       - name: Archive translated files

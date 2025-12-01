@@ -81,12 +81,17 @@ async function mergeTextFiles(
 
   // Save missing keys if --miss flag is set
   if (saveMissing) {
+    console.log(`Total base keys: ${baseKeys.size}`);
+    console.log(`Total patched keys: ${patchedKeys.size}`);
+    
     const missingDir = join(baseDir, 'missing');
     if (!existsSync(missingDir)) {
       await mkdir(missingDir, { recursive: true });
     }
 
     const missingKeys = Array.from(baseKeys).filter((key) => !patchedKeys.has(key));
+    console.log(`Missing keys to translate: ${missingKeys.length}`);
+    
     const missingData: TextData = {};
     
     for (const key of missingKeys) {
