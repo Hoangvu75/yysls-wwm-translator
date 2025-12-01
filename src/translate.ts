@@ -12,7 +12,7 @@ Translate the following Chinese text to Vietnamese accurately, not missing any C
 Just response as json, do not add any extra explanation like \`\`\``;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
 if (!GEMINI_API_KEY) {
   console.error('Error: GEMINI_API_KEY is not set in environment variables');
