@@ -101,6 +101,14 @@ jobs:
           else
             echo "TRANSLATION_SUCCESS=false" >> $GITHUB_ENV
           fi
+      
+      - name: Upload translated files as artifact (for partial progress)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: translated-files-${{ github.run_number }}
+          path: ./works/translated/
+          retention-days: 7
 
       - name: Save to GitHub Releases
         if: ${{ env.TRANSLATION_SUCCESS == 'true' }}
